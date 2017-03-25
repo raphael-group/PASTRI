@@ -6,11 +6,7 @@ from io import *
 def space(tree_nodes):
     return "\t"*tree_nodes
 
-def enumerate_trees(tree_spectrums, freqs):
-    # Create ancestry graph with F
-    # Enumerate all spanning trees
-    # Report (t,l) pairs
-
+def enumerate_trees_linear(tree_spectrums, freqs):
     graph = {}
     for i, row1 in enumerate(freqs):
         graph[i] = []
@@ -24,6 +20,7 @@ def enumerate_trees(tree_spectrums, freqs):
             if all_gt: graph[i].append(j)
     num_verts, num_samples = freqs.shape
     all_trees = []
+    largest_tree = 0
     for i in range(num_verts):
         frontier = []
         root = i
@@ -31,9 +28,41 @@ def enumerate_trees(tree_spectrums, freqs):
             frontier.append((root, edge))
         tree_nodes = [0]*num_verts
         tree_nodes[i] = 1
-        root_i_trees = grow([], tree_nodes, num_verts, frontier, graph, freqs, [], root)
+        root_i_trees, largest_tree = grow_linear([], tree_nodes, num_verts, frontier, graph, freqs, [], root, largest_tree)
         all_trees+=[(tree,i) for tree in root_i_trees]
-    #print all_trees
+
+    counts = [0]*len(tree_spectrums)
+    for (tree, i) in all_trees:
+        child_list = c_list_from_edge_list(tree, num_verts)
+        spectrum = child_spectrum(child_list, i)
+        counts[tree_spectrums[spectrum]] += 1
+    return counts, largest_tree
+ 
+
+def enumerate_trees(tree_spectrums, freqs):
+    graph = {}
+    for i, row1 in enumerate(freqs):
+        graph[i] = []
+        for j, row2 in enumerate(freqs):
+            if i == j: continue
+            all_gt = True
+            for v,w in zip(row1,row2):
+                if v < w:
+                    all_gt = False
+                    break
+            if all_gt: graph[i].append(j)
+    num_verts, num_samples = freqs.shape
+    all_trees = []
+    largest_tree = 0
+    for i in range(num_verts):
+        frontier = []
+        root = i
+        for edge in graph[root]:
+            frontier.append((root, edge))
+        tree_nodes = [0]*num_verts
+        tree_nodes[i] = 1
+        root_i_trees, largest_tree = grow([], tree_nodes, num_verts, frontier, graph, freqs, [], root, largest_tree)
+        all_trees+=[(tree,i) for tree in root_i_trees]
 
     counts = [0]*len(tree_spectrums)
 
@@ -47,7 +76,7 @@ def enumerate_trees(tree_spectrums, freqs):
         spectrum = child_spectrum(child_list, i)
         counts[tree_spectrums[spectrum]] += 1
 
-    return counts
+    return counts, largest_tree
  
 def child_spectrum(child_list, root):
     val = spectrum_recurse(child_list, root)
@@ -91,7 +120,6 @@ def c_list_from_edge_list(tree, verts):
         child_list[s].append(t)
     return child_list 
 
-
 def convert_to_pp(tree, root, verts):
     # first convert to childlist
     child_list = {}
@@ -114,19 +142,45 @@ def recurse_convert_to_pp(matrix, child_list, i, pi, verts):
     matrix[i,i] = 1
     for c in child_list[i]: recurse_convert_to_pp(matrix, child_list, c, i, verts)
 
-
-
-def canoncial_tree(matrix):
-    pass     
-    
-
-def grow(tree, tree_nodes, k, F, graph, freqs, trees, root):
+def grow_linear(tree, tree_nodes, k, F, graph, freqs, trees, root, largest_tree):
     z = sum(tree_nodes)
-    if sum(tree_nodes) == k:
-           
-        #print space(z), "FOUND TREE"
 
-        #print space(z), tree
+    if len(F) == 0:
+        largest_tree = max(sum(tree_nodes), largest_tree)
+    if sum(tree_nodes) == k:
+        trees.append(tree[:])
+    else:
+        FF = []
+        while len(F) > 0:
+            assert(test_frontier(tree_nodes, graph, F))
+            
+            # Add a new node to the tree
+            edge = F.pop()
+            start, end = edge
+            tree.append(edge)
+            tree_nodes[end] = 1
+
+            removed_edges = []
+            
+            F = construct_frontier_linear(tree_nodes, tree, graph, freqs)
+            trees, largest_tree = grow_linear(tree, tree_nodes, k, F, copy.deepcopy(graph), freqs, trees, root, largest_tree)
+
+            graph[start].remove(end)
+    
+            # Remove the node you just added from the tree
+            tree_nodes[end] = 0
+            popped_edge = tree.pop()
+            assert(popped_edge == edge)
+            F = construct_frontier_linear(tree_nodes, tree, graph, freqs)
+    return trees, largest_tree
+
+def grow(tree, tree_nodes, k, F, graph, freqs, trees, root, largest_tree):
+    z = sum(tree_nodes)
+
+    if len(F) == 0:
+        largest_tree = max(sum(tree_nodes), largest_tree)
+
+    if sum(tree_nodes) == k:
         trees.append(tree[:])
         
     else:
@@ -144,7 +198,8 @@ def grow(tree, tree_nodes, k, F, graph, freqs, trees, root):
             removed_edges = []
             
             F = construct_frontier(tree_nodes, tree, graph, freqs)
-            trees = grow(tree, tree_nodes, k, F, copy.deepcopy(graph), freqs, trees, root)
+            trees, largest_tree = grow(tree, tree_nodes, k, F, copy.deepcopy(graph), freqs, trees, root, largest_tree)
+
             graph[start].remove(end)
     
             # Remove the node you just added from the tree
@@ -153,7 +208,40 @@ def grow(tree, tree_nodes, k, F, graph, freqs, trees, root):
             popped_edge = tree.pop()
             assert(popped_edge == edge)
             F = construct_frontier(tree_nodes, tree, graph, freqs)
-    return trees
+    return trees, largest_tree
+ 
+def construct_frontier_linear(tree_nodes, tree, graph, freqs):
+    # Need to check sum condition across samples
+    num_nodes, num_samples = freqs.shape
+    F = []
+    for s in graph.keys():
+        Ts = graph[s]
+        slack = [0]*num_samples
+        for j in range(num_samples):
+            
+            par_freq = freqs.item((s,j))
+            child_set = [t for (s2,t) in tree if s == s2]
+            if len(child_set) > 0: 
+                slack[j] = 0
+            else: 
+                child_freq = sum([ freqs.item((t,j)) for t in child_set])
+                slack[j] = par_freq - child_freq
+            assert(round(slack[j],10) >= 0)
+
+        if tree_nodes[s] == 1:
+             for t in Ts:
+                 # If the tree 
+                 if tree_nodes[t] == 0:
+                    fits = True
+                    for j in range(num_samples):
+                        t_freq = freqs.item((t,j))
+                        if round(t_freq,10) > round(slack[j],10):
+                            fits = False 
+                            break
+                    if fits: F.append((s,t))
+    return F
+
+
     
 def construct_frontier(tree_nodes, tree, graph, freqs):
     # Need to check sum condition across samples

@@ -8,8 +8,8 @@ num_iters=$5
 out=$out_dir$prefix
 
 num_clusters_sc=`python get_num_clusters.py $clustering_file`
-pp_matrix_file=./PPMatrix/GammaMatrix${num_clusters_sc}.txt
+pp_matrix_file=./PPMatrix/Matrix${num_clusters_sc}.txt
 
 ### Run Importance Sampling
-python importance_sampling_enum.py $input_file $pp_matrix_file $num_iters ${out}.beta_params ${out} ${out}.true
+python multi_importance_sampling.py $input_file $pp_matrix_file $num_iters $clustering_file ${out} ${out}.true
 
