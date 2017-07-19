@@ -145,6 +145,17 @@ def read_in_files(vaf_file, estimate_file, pp_matrices):
     return A, D, alpha, beta, trees, num_snvs, num_samples, num_clusters, num_chars 
 
 def parse_arguments():
+    '''
+    Parses command line arguments.
+
+    Returns:
+        data_file:      Filename containing variant allele frequencies
+        proposal_file:  Filename containing the initial proposal distribution
+        tree_file:      Perfect phylogeny matrices file
+        num_iters:      The total number of iterations
+        output_prefix:  Path and prefix for output data
+
+    '''
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("data_file", type=str)
