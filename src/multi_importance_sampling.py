@@ -138,30 +138,23 @@ def algorithm3(A, D, trees, alpha, beta, sigma, num_clusters, num_samples, num_i
 
     return likelihoods, samples
 
-
-
-def parse_arguments():
-    import sys
-    # Read in files
-
-    if len(sys.argv) <= 3: 
-        print "Usage: python importance_sampling.py VAF_file pp_matrix_file num_iters estimate prefix track_samples"
-        quit()
-    vaf_file = sys.argv[1] 
-    pp_matrices = sys.argv[2]
-    num_iters = int(sys.argv[3])
-    estimate_file = sys.argv[4]
-    prefix = sys.argv[5]
-    
-
-    return vaf_file, pp_matrices, num_iters, estimate_file, prefix
- 
 def read_in_files(vaf_file, estimate_file, pp_matrices):
     A,D, num_snvs, num_samples = read_vaf_file(vaf_file)
     alpha, beta, num_clusters = read_estimate_file(estimate_file)
     trees, num_chars = read_in_trees(pp_matrices)
     return A, D, alpha, beta, trees, num_snvs, num_samples, num_clusters, num_chars 
 
+def parse_arguments():
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("data_file", type=str)
+    parser.add_argument("proposal_file", type = str)
+    parser.add_argument("tree_file", type=str)
+    parser.add_argument("-n", "--num_iters", type=int, default=1000)
+    parser.add_argument("-o", "--output_prefix", type=str, default=None)
+    
+    args = parser.parse_args()
+    return args.data_file, args.proposal_file, args.tree_file, args.num_iters, args.output_prefix
 
 def main():
 
@@ -169,9 +162,9 @@ def main():
     #   Initialize
     ###
  
-    vaf_file, pp_matrices, num_iters, estimate_file, prefix = \
+    vaf_file, estimate_file, pp_matrices, num_iters, prefix = \
             parse_arguments()
-    A, D, alpha, beta, trees, num_snvs, num_samples,num_clusters, num_chars = \
+    A, D, alpha, beta, trees, num_snvs, num_samples, num_clusters, num_chars = \
             read_in_files(vaf_file, estimate_file, pp_matrices)
     
 
