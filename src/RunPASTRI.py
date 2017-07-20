@@ -139,21 +139,34 @@ def algorithm3(A, D, trees, alpha, beta, sigma, num_clusters, num_samples, num_i
     return likelihoods, samples
 
 def read_in_files(vaf_file, estimate_file, pp_matrices):
+    '''
+    Read in input files.
+
+    Returns:
+        A, D:           <Numpy Matrix> Matrices containing the number of variant and total reads for the input data
+        alpha, beta:    <Numpy Matrix> Matrices containing parameters for beta, for the initial proposal distribution
+        trees:          <list of Numpy Matrix> Binary perfect phylogeny matrices
+        num_snvs:       <int> The number of observed mutations
+        num_samples:    <int> The number of samples
+        num_clusters:   <int> The number of clusters as given in the proposal distribution
+
+    '''
     A,D, num_snvs, num_samples = read_vaf_file(vaf_file)
     alpha, beta, num_clusters = read_estimate_file(estimate_file)
     trees, num_chars = read_in_trees(pp_matrices)
-    return A, D, alpha, beta, trees, num_snvs, num_samples, num_clusters, num_chars 
+    assert(num_clusters == num_chars)
+    return A, D, alpha, beta, trees, num_snvs, num_samples, num_clusters 
 
 def parse_arguments():
     '''
     Parses command line arguments.
 
     Returns:
-        data_file:      Filename containing variant allele frequencies
-        proposal_file:  Filename containing the initial proposal distribution
-        tree_file:      Perfect phylogeny matrices file
-        num_iters:      The total number of iterations
-        output_prefix:  Path and prefix for output data
+        data_file:      <str> Filename containing variant allele frequencies
+        proposal_file:  <str> Filename containing the initial proposal distribution
+        tree_file:      <str> Perfect phylogeny matrices file
+        num_iters:      <int> The total number of iterations
+        output_prefix:  <str> Path and prefix for output data
 
     '''
     import argparse
@@ -175,7 +188,7 @@ def main():
  
     vaf_file, estimate_file, pp_matrices, num_iters, prefix = \
             parse_arguments()
-    A, D, alpha, beta, trees, num_snvs, num_samples, num_clusters, num_chars = \
+    A, D, alpha, beta, trees, num_snvs, num_samples, num_clusters = \
             read_in_files(vaf_file, estimate_file, pp_matrices)
     
 
