@@ -60,25 +60,35 @@ def update_proposal(cur_size, cur_ll, cur_distribution, sigma, f_sample, largest
         #print "Keeping"
         return alpha, beta, cur_size, cur_ll
 
-def algorithm3(A, D, trees, alpha, beta, sigma, num_clusters, num_samples, num_iters, num_snvs, track_samples=False):
+def get_tree_spectra(trees):
+    '''
+    Creates a canonical form of trees to compare against, to avoid doing repeatedly.
+    '''
+    tree_spectra = {}
+    for i, tree in enumerate(trees):
+        child_list = c_list_from_matrix(tree)
+        tree_spectra[child_spectrum(child_list,0)]=i
+    return tree_spectra
+
+
+
+def run_algorithm(A, D, trees, alpha, beta, sigma, num_clusters, num_samples, num_iters, num_snvs, track_samples=False):
     ### 
     #   Setup -- generate tree spectra for enumeration
     #   to avoid doing this repeatedly
     ### 
     biggest_tree = 0
-    tree_spectrums = {}
-    for i, tree in enumerate(trees):
-        child_list = c_list_from_matrix(tree)
-        tree_spectrums[child_spectrum(child_list,0)]=i
-
     tree_likelihoods = [[] for i in range(len(trees))]
+    tree_spectra = get_tree_spectra(trees)
+    
+    
     max_ll_means = None
     max_ll = float('-inf')
     samples = []
 
     # Current Proposal consists of alpha, beta, a likelihood value, and a tree size
     f_start, sigma = get_f_matrix(alpha, beta)
-    tree_counts, largest_tree = enumerate_trees(tree_spectrums, f_start)
+    tree_counts, largest_tree = enumerate_trees(tree_spectra, f_start)
     print tree_counts
     ll = get_binomial_log_likelihood(A,D,f_start,num_snvs,num_clusters,num_samples)
     base_size = largest_tree
@@ -104,7 +114,7 @@ def algorithm3(A, D, trees, alpha, beta, sigma, num_clusters, num_samples, num_i
         # Generate sample
         
         # Enumerate all trees that fit that sample
-        tree_counts, largest_tree = enumerate_trees(tree_spectrums, f_sample)
+        tree_counts, largest_tree = enumerate_trees(tree_spectra, f_sample)
         if sum(tree_counts) > 0:
             ll = get_binomial_log_likelihood(A,D,f_sample,num_snvs,num_clusters,num_samples)
             print "Found tree", ll, sll
@@ -202,7 +212,7 @@ def main():
     ###
     #   Run Algorithm
     ###
-    likelihoods, samples = algorithm3(A, D, trees, alpha, beta, sigma, num_clusters, num_samples, num_iters, num_snvs)
+    likelihoods, samples = run_algorithm(A, D, trees, alpha, beta, sigma, num_clusters, num_samples, num_iters, num_snvs)
 
 
     ###
