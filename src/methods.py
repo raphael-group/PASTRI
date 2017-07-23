@@ -61,7 +61,10 @@ def read_vaf_file(filename):
 from scipy.misc import logsumexp
 import scipy.stats
 
-def generate_sample(alpha, beta, num_clusters, num_samples):
+def generate_sample(proposal, num_clusters, num_samples):
+
+    alpha = proposal.alpha
+    beta = proposal.beta
     # generating samples from product of betas
     newF = np.zeros((num_clusters, num_samples))
     row_permutation=np.random.permutation(num_clusters)
