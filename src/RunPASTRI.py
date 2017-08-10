@@ -36,30 +36,6 @@ def get_alpha_beta_matrix(f, sigma):
             newA[i,j] = alpha
             newB[i,j] = beta
     return newA, newB
-
-def update_proposal(cur_size, cur_ll, cur_distribution, sigma, f_sample, largest_tree, ll, base_distribution, base_size, base_ll, epsilon):
-    #print ll, cur_ll
-    if largest_tree > cur_size: 
-        print "Bigger tree", largest_tree, cur_size
-        alpha, beta = get_alpha_beta_matrix(f_sample, sigma)
-        #print "Accepting new, larger size", largest_tree, cur_size
-        return alpha, beta, largest_tree, ll 
-    if ll != None and ll > cur_ll :
-        alpha, beta = get_alpha_beta_matrix(f_sample, sigma)
-        print "Accepting new, better likelihood"
-        return alpha, beta, largest_tree, ll
-    val = random.random()
-
-    if val < epsilon:
-        print "Restarting"
-        alpha, beta = base_distribution
-        #print "Restarting"
-        return alpha, beta, base_size, base_ll
-    else:
-        alpha, beta = cur_distribution
-        #print "Keeping"
-        return alpha, beta, cur_size, cur_ll
-
 def get_tree_spectra(trees):
     '''
     Creates a canonical form of trees to compare against, to avoid doing repeatedly.
@@ -69,6 +45,49 @@ def get_tree_spectra(trees):
         child_list = c_list_from_matrix(tree)
         tree_spectra[child_spectrum(child_list,0)]=i
     return tree_spectra
+
+
+class Proposal:
+    def __init__(self, alpha, beta, ll, tree_size):
+        self.alpha = alpha
+        self.beta = beta
+        self.cur_ll = ll
+        self.tree_size = tree_size
+    def _update(self, alpha, beta, ll, tree_size):
+        self.alpha = alpha
+        self.beta = beta
+        self.cur_ll = ll
+        self.tree_size = tree_size
+    def _get_params(self):
+        return self.tree_size, self.cur_ll, (self.alpha, self.beta)
+    def update_proposal(self, sigma, f_sample, largest_tree, ll, base_distribution, base_size, base_ll, epsilon):
+        cur_size, cur_ll, cur_distribution = self._get_params()
+        if largest_tree > cur_size: 
+            print "Bigger tree", largest_tree, cur_size
+            alpha, beta = get_alpha_beta_matrix(f_sample, sigma)
+            self._update(alpha, beta, ll, largest_tree)
+            return alpha, beta, largest_tree, ll 
+        if ll != None and ll > cur_ll :
+            alpha, beta = get_alpha_beta_matrix(f_sample, sigma)
+            print "Accepting new, better likelihood"
+
+            self._update(alpha, beta, ll, largest_tree)
+            return alpha, beta, largest_tree, ll
+        val = random.random()
+
+        if val < epsilon:
+            print "Restarting"
+            alpha, beta = base_distribution
+
+            self._update(alpha, beta, base_ll, base_size)
+            return alpha, beta, base_size, base_ll
+        else:
+            alpha, beta = cur_distribution
+
+            self._update(alpha, beta, cur_ll, cur_size)
+            return alpha, beta, cur_size, cur_ll
+
+
 
 
 
@@ -89,8 +108,9 @@ def run_algorithm(A, D, trees, alpha, beta, sigma, num_clusters, num_samples, nu
     # Current Proposal consists of alpha, beta, a likelihood value, and a tree size
     f_start, sigma = get_f_matrix(alpha, beta)
     tree_counts, largest_tree = enumerate_trees(tree_spectra, f_start)
-    print tree_counts
     ll = get_binomial_log_likelihood(A,D,f_start,num_snvs,num_clusters,num_samples)
+    
+    
     base_size = largest_tree
     base_distribution = (alpha,beta)
     cur_size = largest_tree
@@ -98,6 +118,9 @@ def run_algorithm(A, D, trees, alpha, beta, sigma, num_clusters, num_samples, nu
         cur_ll = ll
     else:
         cur_ll = float("-inf")
+
+    # Current proposal
+    proposal = Proposal(alpha, beta, cur_ll, biggest_tree)
 
     base_ll = cur_ll
     biggest_tree = cur_size
@@ -130,10 +153,11 @@ def run_algorithm(A, D, trees, alpha, beta, sigma, num_clusters, num_samples, nu
         else:
             ll = None
 
-        alpha, beta, cur_size, cur_ll = update_proposal(cur_size, cur_ll, (alpha, beta), sigma, f_sample, largest_tree, ll, base_distribution, base_size, base_ll, epsilon)
+        alpha, beta, cur_size, cur_ll = proposal.update_proposal(sigma, f_sample, largest_tree, ll, base_distribution, base_size, base_ll, epsilon)
+
         biggest_tree = max(biggest_tree, cur_size)
 
-        f_sample, sll = generate_sample(alpha, beta, num_clusters, num_samples)
+        f_sample, sll = generate_sample(proposal, num_clusters, num_samples)
 
     best_tree = None
     best_tree_ll = float('-inf')
@@ -163,9 +187,17 @@ def read_in_files(vaf_file, estimate_file, pp_matrices):
     '''
     A,D, num_snvs, num_samples = read_vaf_file(vaf_file)
     alpha, beta, num_clusters = read_estimate_file(estimate_file)
-    trees, num_chars = read_in_trees(pp_matrices)
+    #treefile = "
+    from os import path
+    curpath =  path.dirname(path.realpath(__file__))
+    treefile = path.join(curpath, "PPMatrices", "Matrix"+str(num_clusters)+".txt")
+    #print treefile
+    #print pp_matrices
+    #assert(treefile == pp_matrices)
+    trees, num_chars = read_in_trees(treefile)
     assert(num_clusters == num_chars)
     return A, D, alpha, beta, trees, num_snvs, num_samples, num_clusters 
+
 
 def parse_arguments():
     '''
