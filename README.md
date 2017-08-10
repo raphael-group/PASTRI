@@ -132,7 +132,7 @@ An example input file is provided in `example/` directory. This example uses tre
 Clone PASTRI repository to your local machine. In the repository run 
 
 ```
-python src/RunPASTRI.py example/example.input example/example.proposal -o example/
+python src/RunPASTRI.py example/Example.input example/Example.proposal -o example/Example
 ```
 
 This will run PASTRI on a basic example with 20 mutations and 5 samples, with 8 clusters of mutations. 
