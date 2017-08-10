@@ -136,7 +136,7 @@ python src/RunPASTRI.py example/Example.input example/Example.proposal -o exampl
 ```
 
 This will run PASTRI on a basic example with 20 mutations and 5 samples, with 8 clusters of mutations. 
-PASTRI will execute 1000 iterations and then report the posterior distributions over trees in a `example/example.trees`. 
+PASTRI will execute 1000 iterations and then report the posterior distributions over trees in a `example/Example.trees`. 
 
 
 ## 5 Development
