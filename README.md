@@ -176,7 +176,7 @@ PASTRI will execute 1000 iterations and then report the posterior distributions 
 Following, to obtain the best frequency matrix and cluster assignments run:
 
 ```
-python src/RunPASTRI.py example/Example.input example/Example.trees example/Example.fsamples -o example/Example
+python src/get_F_and_C.py example/Example.input example/Example.trees example/Example.fsamples -o example/Example
 ```
 
 
