@@ -187,13 +187,9 @@ def read_in_files(vaf_file, estimate_file, pp_matrices):
     '''
     A,D, num_snvs, num_samples = read_vaf_file(vaf_file)
     alpha, beta, num_clusters = read_estimate_file(estimate_file)
-    #treefile = "
     from os import path
     curpath =  path.dirname(path.realpath(__file__))
-    treefile = path.join(curpath, "PPMatrices", "Matrix"+str(num_clusters)+".txt")
-    #print treefile
-    #print pp_matrices
-    #assert(treefile == pp_matrices)
+    treefile = path.join(curpath, "PPMatrix", "Matrix"+str(num_clusters)+".txt")
     trees, num_chars = read_in_trees(treefile)
     assert(num_clusters == num_chars)
     return A, D, alpha, beta, trees, num_snvs, num_samples, num_clusters 
@@ -215,12 +211,11 @@ def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("data_file", type=str)
     parser.add_argument("proposal_file", type = str)
-    parser.add_argument("tree_file", type=str)
     parser.add_argument("-n", "--num_iters", type=int, default=1000)
     parser.add_argument("-o", "--output_prefix", type=str, default=None)
     
     args = parser.parse_args()
-    return args.data_file, args.proposal_file, args.tree_file, args.num_iters, args.output_prefix
+    return args.data_file, args.proposal_file, None, args.num_iters, args.output_prefix
 
 def main():
 
