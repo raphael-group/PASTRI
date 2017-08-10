@@ -89,14 +89,14 @@ def read_in_true(filename):
         F = read_in_matrix(f)
     return tree, U, F
 
-def read_in_matrix(f):
+def read_in_matrix(f, datatype = float):
         A_header = f.readline()
         num_snvs, num_samples = map(int, f.readline().strip()[1:-1].split(","))
         A = np.zeros((num_snvs, num_samples))
         
         for i in range(num_snvs):
             line = f.readline()
-            line = map(float, line.strip().split())
+            line = map(datatype, line.strip().split())
             for j,v in enumerate(line):
                 A[i,j] = v
         f.readline()
