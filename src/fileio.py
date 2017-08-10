@@ -89,7 +89,7 @@ def read_in_true(filename):
         F = read_in_matrix(f)
     return tree, U, F
 
-def read_in_matrix(f, datatype = float):
+def read_in_matrix(f, datatype = float, header=False):
         A_header = f.readline()
         num_snvs, num_samples = map(int, f.readline().strip()[1:-1].split(","))
         A = np.zeros((num_snvs, num_samples))
@@ -100,7 +100,10 @@ def read_in_matrix(f, datatype = float):
             for j,v in enumerate(line):
                 A[i,j] = v
         f.readline()
-        return A
+        if header:
+            return A, A_header
+        else:
+            return A
 
 
     
