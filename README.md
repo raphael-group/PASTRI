@@ -68,6 +68,9 @@ Dependencies:
 -----
 
 ### 3.1 Usage
+
+RunPASTRI.py calculates the posterior likelihood over trees. 
+
 ```
 python src/RunPASTRI.py [-h] [-n NUM_ITERS] [-o OUTPUT_PREFIX]
                     path/to/data_file path/to/proposal_file
@@ -80,6 +83,23 @@ optional arguments:
   -h, --help            show help message and exit
   -n NUM_ITERS, --num_iters NUM_ITERS
   -o OUTPUT_PREFIX, --output_prefix OUTPUT_PREFIX
+```
+
+For a particular tree, get_F_and_C.py calculates best observed frequency matrix F, and cluster assignments C.
+
+```
+python get_F_and_C.py [-h] [-i TREE_POS] [-o OUTPUT_PREFIX]
+                      data_file result_file sample_file
+
+positional arguments:
+    data_file
+    result_file ( [PREFIX].trees from RunPASTRI.py )
+    sample_file ( [PREFIX].fsamples from RunPASTRI.py )
+
+optional arguments:
+    -h, --help      show help message and exit
+    -i, --tree_pos  (default = 1) the position of the tree of interest in the results file.
+                    by default calculates for the highest likelihood tree. 
 ```
 
 ### 3.2 File Format
@@ -124,6 +144,21 @@ Each matrix correponds to a tree topology. The name is formatted as:
 
 The provided matrix is in perfect phylogeny format. 
 
+2. Samples
+
+See `example/Example.fsamples`. Each matrix corresponds to a sampled frequency matrix. The header indicates 
+the data likelihood of the sample.
+
+Get F and C output.
+
+3. Frequency matrix  
+
+See `example/Example.1.F`. The maximum likelihood frequency matrix for the highest likelihood tree.
+
+4. Cluster assignments
+
+See `example/Example.1.C`. The maximum likelihood cluster assignments for the given F, and the highest likelihood tree.
+
 
 ## 4 Basic Example
 -----
@@ -137,6 +172,12 @@ python src/RunPASTRI.py example/Example.input example/Example.proposal -o exampl
 
 This will run PASTRI on a basic example with 20 mutations and 5 samples, with 8 clusters of mutations. 
 PASTRI will execute 1000 iterations and then report the posterior distributions over trees in a `example/example.trees`. 
+
+Following, to obtain the best frequency matrix and cluster assignments run:
+
+```
+python src/RunPASTRI.py example/Example.input example/Example.trees example/Example.fsamples -o example/Example
+```
 
 
 ## 5 Development
