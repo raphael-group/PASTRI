@@ -1,5 +1,3 @@
-#from generate_data import read_in_trees, generate_random_usage_matrix, write_matrix
-
 import numpy as np
 import random
 import heapq
@@ -7,7 +5,6 @@ import time
 
 from methods import *
 from fileio import *
-
 
 ###
 #   Convert between representations of beta distribution
@@ -172,7 +169,7 @@ def run_algorithm(A, D, trees, alpha, beta, sigma, num_clusters, num_samples, nu
 
     return likelihoods, samples
 
-def read_in_files(vaf_file, estimate_file, pp_matrices):
+def read_in_files(vaf_file, estimate_file):
     '''
     Read in input files.
 
@@ -215,7 +212,7 @@ def parse_arguments():
     parser.add_argument("-o", "--output_prefix", type=str, default=None)
     
     args = parser.parse_args()
-    return args.data_file, args.proposal_file, None, args.num_iters, args.output_prefix
+    return args.data_file, args.proposal_file, args.num_iters, args.output_prefix
 
 def main():
 
@@ -223,10 +220,10 @@ def main():
     #   Initialize
     ###
  
-    vaf_file, estimate_file, pp_matrices, num_iters, prefix = \
+    vaf_file, estimate_file, num_iters, prefix = \
             parse_arguments()
     A, D, alpha, beta, trees, num_snvs, num_samples, num_clusters = \
-            read_in_files(vaf_file, estimate_file, pp_matrices)
+            read_in_files(vaf_file, estimate_file)
     
 
     # TODO: Replace
