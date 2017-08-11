@@ -1,6 +1,7 @@
 from fileio import *
-from methods import read_vaf_file
+from methods import *
 from scipy.stats import binom
+from RunPASTRI import get_tree_spectra
 
 import numpy as np
 def parse_arguments():
@@ -63,10 +64,6 @@ def get_F(filename, tree_index):
         return best_F
 
 def get_maxll_cluster(a_vec, d_vec, F, num_clusts, num_samples):
-    print a_vec, d_vec
-    for a, d in zip(a_vec, d_vec):
-        print a*2./d,
-    print
     # Calculate the likelihood of it coming from any of the clusters
     cluster_likelihoods = []
     maxll = float("-inf")
@@ -77,9 +74,7 @@ def get_maxll_cluster(a_vec, d_vec, F, num_clusts, num_samples):
             freq = min(1,F.item((i,j))+0.00001)
             likelihood = binom.logpmf(a_vec[j],d_vec[j],freq/2.)
             clust_ll += likelihood
-            print freq
 
-        print i, clust_ll
 
         if clust_ll >= maxll:
             maxll = clust_ll
@@ -87,6 +82,47 @@ def get_maxll_cluster(a_vec, d_vec, F, num_clusts, num_samples):
     
     return max_clust
 
+def get_assignments(tree, freqs, t_index):
+    graph = {}
+    for i, row1 in enumerate(freqs):
+        graph[i] = []
+        for j, row2 in enumerate(freqs):
+            if i == j: continue
+            all_gt = True
+            for v,w in zip(row1,row2):
+                if v < w:
+                    all_gt = False
+                    break
+            if all_gt: graph[i].append(j)
+    num_verts, num_samples = freqs.shape
+    all_trees = []
+    largest_tree = 0
+    for i in range(num_verts):
+        frontier = []
+        root = i
+        for edge in graph[root]:
+            frontier.append((root, edge))
+        tree_nodes = [0]*num_verts
+        tree_nodes[i] = 1
+        root_i_trees, largest_tree = grow([], tree_nodes, num_verts, frontier, graph, freqs, [], root, largest_tree)
+        all_trees+=[(tree,i) for tree in root_i_trees]
+
+
+    assgmt_list = []
+    t_spectrum = child_spectrum(c_list_from_edge_list(tree, num_verts), 0)
+
+    for (tree, i) in all_trees:
+        child_list = c_list_from_edge_list(tree, num_verts)
+        spectrum = child_spectrum(child_list, i)
+        #tree_index = tree_spectra[spectrum]
+        if t_spectrum == spectrum:
+            assgmt_list.append(child_list)
+
+    return assgmt_list
+ 
+
+
+ 
 if __name__ == '__main__':
 
     input_file, tree_likelihoods, sample_file, tree_pos, prefix = parse_arguments()
@@ -102,7 +138,8 @@ if __name__ == '__main__':
 
         assgmt = get_maxll_cluster(a_vec, d_vec, F, num_clusts, num_samples)
         assgmts.append(assgmt)
-
+    
+    print "Writing cluster assignments to:", prefix+"."+str(tree_pos)+".C"
     with open(prefix+"."+str(tree_pos)+".C", 'w') as out:
         nodes = {}
         for i, v in enumerate(assgmts):
@@ -110,8 +147,20 @@ if __name__ == '__main__':
                 nodes[v] = []
             nodes[v].append(i)
         for v in nodes:
-            out.write(str(v)+"\t"+"\t".join(map(str,nodes[v]))+"\n")
-
+            out.write(unicode(str(v)+"\t"+"\t".join(map(str,nodes[v]))+"\n"))
+    
+    print "Writing frequencies to:", prefix+"."+str(tree_pos)+".F"
     with open(prefix+"."+str(tree_pos)+".F", 'w') as out:
         write_matrix(F, "F", out)
+
+    print "Writing labeled trees to:", prefix+"."+str(tree_pos)+".labeled_trees"
+    with open(prefix+"."+str(tree_pos)+".labeled_trees", 'w') as out:
+        assgmt_list = get_assignments(tree, F, tree_index)
+        for i,tree in enumerate(assgmt_list):
+            out.write(unicode("> Tree Labeling " + str(i) + "\n"))
+            for p in tree:
+                for c in tree[p]:
+                    out.write(unicode("\t".join(map(str,[p,c])) + "\n"))
+            out.write(u"\n")
+
 

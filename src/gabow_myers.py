@@ -66,12 +66,8 @@ def enumerate_trees(tree_spectrums, freqs):
 
     counts = [0]*len(tree_spectrums)
 
-    # Now I have all the trees, I need to return unlabeled trees and permutations       
-    #print "----------"
-    #print all_trees
     # For any tree, find the topology that it corresponds to
     for (tree, i) in all_trees:
-        #convert_to_pp(tree, 1, 4)
         child_list = c_list_from_edge_list(tree, num_verts)
         spectrum = child_spectrum(child_list, i)
         counts[tree_spectrums[spectrum]] += 1
