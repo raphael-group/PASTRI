@@ -136,7 +136,7 @@ cluster of SNVs and each column corresponds to a sample.
 1. Tree Posterior
 
 See `example/example.trees` for example, after running basic example in section 3. 
-Each matrix correponds to a tree topology. The name is formatted as:
+Each matrix correponds to an unlabeled tree topology. The name is formatted as:
 
 ```
  > rank:id:Log-likelihood
@@ -151,6 +151,12 @@ the data likelihood of the sample.
 
 Get F and C output.
 
+3. Labeled Trees
+See `example/Example.1.labeled_trees`. An edge_list corresponding to a labeling of the highest likelihood (unlabeled tree).
+These correspond to permutations `pi` in the manuscript. 
+Indexes correspond to rows of F, and cluster indexes of C.  
+If more than one labeling is listed, all listed labelings have equal likelihood. 
+
 3. Frequency matrix  
 
 See `example/Example.1.F`. The maximum likelihood frequency matrix for the highest likelihood tree.
@@ -158,6 +164,8 @@ See `example/Example.1.F`. The maximum likelihood frequency matrix for the highe
 4. Cluster assignments
 
 See `example/Example.1.C`. The maximum likelihood cluster assignments for the given F, and the highest likelihood tree.
+Each row lists first the cluster index (corresponding the the same row in F, and the same node in the labeled tree),
+then the list of mutations assigned to that cluster (indexed according to their row in the input file (0-based)). 
 
 
 ## 4 Basic Example
