@@ -161,7 +161,7 @@ If more than one labeling is listed, all listed labelings have equal likelihood.
 
 See `example/Example.1.F`. The maximum likelihood frequency matrix for the highest likelihood tree.
 
-4. Cluster assignments
+5. Cluster assignments
 
 See `example/Example.1.C`. The maximum likelihood cluster assignments for the given F, and the highest likelihood tree.
 Each row lists first the cluster index (corresponding the the same row in F, and the same node in the labeled tree),
