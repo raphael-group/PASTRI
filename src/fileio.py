@@ -68,7 +68,7 @@ def write_out_estimate(F, depth, out_prefix):
 def write_matrix(matrix,name, stream):
     stream.write(u"> " + name + "\n")
     
-    if matrix == None:
+    if matrix is None:
         stream.write(str((0,0))+u"\n")
     else:
         stream.write(str(matrix.shape)+u"\n")
